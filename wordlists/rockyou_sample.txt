@@ -1,0 +1,6 @@
+# Пример словаря (замените на полный rockyou.txt или другой список)
+password
+123456
+qwerty
+admin
+secret

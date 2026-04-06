@@ -1,0 +1,28 @@
+# Виртуальное окружение и кэш Python
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Секреты и локальная конфигурация
+.env
+
+# Архивы и выходные данные (не попадают в репозиторий)
+IN/*.rar
+IN/**/*.rar
+OUT/*
+!OUT/.gitkeep
+
+# Логи
+log/
+*.log
+
+# Системные файлы
+.DS_Store
+
+# Большие словари (пользователь кладёт сам); маленький пример оставляем в репозитории
+wordlists/*.txt
+!wordlists/rockyou_sample.txt
+!wordlists/.gitkeep

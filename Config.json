@@ -1,0 +1,60 @@
+{
+  "directories": {
+    "in": "IN",
+    "out": "OUT"
+  },
+  "archive_file": "Алекс пьян.rar",
+  "database": {
+    "filename": "checked_passwords.sqlite",
+    "journal_mode": "WAL"
+  },
+  "password": {
+    "min_length": 1,
+    "max_length": 8,
+    "charset": "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-#!~",
+    "numeric_charset": "0123456789"
+  },
+  "wordlists": {
+    "defaults": {
+      "encoding": "utf-8",
+      "max_line_length": 64,
+      "skip_lines_starting_with": "#"
+    },
+    "entries": [
+      {
+        "path": "wordlists/rockyou_sample.txt",
+        "label": "sample_small",
+        "max_line_length": 64
+      },
+      {
+        "path": "wordlists/xato-net-10-million-passwords.txt",
+        "label": "xato_10m",
+        "max_line_length": 256
+      }
+    ]
+  },
+  "hybrid": {
+    "enabled": true,
+    "suffix_digits_min_len": 0,
+    "suffix_digits_max_len": 2,
+    "suffix_specials": ["_", "-", "!", "#", "~"],
+    "prefix_digits_max_len": 2,
+    "combine_word_plus_special_plus_digit": true
+  },
+  "checker": {
+    "mode": "rarfile",
+    "unrar_path": "",
+    "unrar_command": "t",
+    "unrar_timeout_sec": 120,
+    "rarfile_open_timeout_sec": 120
+  },
+  "parallelism": {
+    "max_workers": null,
+    "reserve_cpu_cores": 1,
+    "batch_size": 32
+  },
+  "runtime": {
+    "esc_key_enabled": true,
+    "progress_log_every_sec": 30
+  }
+}
