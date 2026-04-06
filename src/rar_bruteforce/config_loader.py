@@ -55,6 +55,9 @@ class AppConfig:
     max_workers: Optional[int]
     reserve_cpu_cores: int
     batch_size: int
+    # Зарезервировано: UnRAR/rarfile не используют GPU/NPU; при true — только предупреждение в логе
+    use_gpu: bool
+    use_neural_accelerator: bool
     esc_key_enabled: bool
     progress_log_every_sec: int
 
@@ -174,6 +177,8 @@ def load_config(project_root: Path, config_path: Optional[Path] = None) -> AppCo
         max_workers=max_workers,
         reserve_cpu_cores=int(par.get("reserve_cpu_cores", 1)),
         batch_size=max(1, int(par.get("batch_size", 32))),
+        use_gpu=bool(par.get("use_gpu", False)),
+        use_neural_accelerator=bool(par.get("use_neural_accelerator", False)),
         esc_key_enabled=bool(rt.get("esc_key_enabled", True)),
         progress_log_every_sec=max(5, int(rt.get("progress_log_every_sec", 30))),
     )

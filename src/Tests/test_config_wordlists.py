@@ -83,6 +83,60 @@ class TestWordlistsConfig(unittest.TestCase):
         self.assertEqual(cfg.wordlists[0].encoding, "latin-1")
         self.assertEqual(cfg.wordlists[0].max_line_length, 50)
 
+    def test_parallelism_accelerator_flags_default_false(self) -> None:
+        cfg_path = self._write(
+            "Config.json",
+            {
+                "directories": {"in": "IN", "out": "OUT"},
+                "archive_file": "a.rar",
+                "database": {"filename": "db.sqlite"},
+                "password": {
+                    "min_length": 1,
+                    "max_length": 4,
+                    "charset": "a",
+                    "numeric_charset": "0",
+                },
+                "wordlists": {"defaults": {"max_line_length": 10}, "entries": []},
+                "hybrid": {"enabled": False},
+                "checker": {"mode": "rarfile", "unrar_path": ""},
+                "parallelism": {"max_workers": 1, "reserve_cpu_cores": 0, "batch_size": 2},
+                "runtime": {"esc_key_enabled": False, "progress_log_every_sec": 5},
+            },
+        )
+        cfg = load_config(self.root, cfg_path)
+        self.assertFalse(cfg.use_gpu)
+        self.assertFalse(cfg.use_neural_accelerator)
+
+    def test_parallelism_accelerator_flags_true(self) -> None:
+        cfg_path = self._write(
+            "Config.json",
+            {
+                "directories": {"in": "IN", "out": "OUT"},
+                "archive_file": "a.rar",
+                "database": {"filename": "db.sqlite"},
+                "password": {
+                    "min_length": 1,
+                    "max_length": 4,
+                    "charset": "a",
+                    "numeric_charset": "0",
+                },
+                "wordlists": {"defaults": {"max_line_length": 10}, "entries": []},
+                "hybrid": {"enabled": False},
+                "checker": {"mode": "rarfile", "unrar_path": ""},
+                "parallelism": {
+                    "max_workers": 1,
+                    "reserve_cpu_cores": 0,
+                    "batch_size": 2,
+                    "use_gpu": True,
+                    "use_neural_accelerator": True,
+                },
+                "runtime": {"esc_key_enabled": False, "progress_log_every_sec": 5},
+            },
+        )
+        cfg = load_config(self.root, cfg_path)
+        self.assertTrue(cfg.use_gpu)
+        self.assertTrue(cfg.use_neural_accelerator)
+
 
 if __name__ == "__main__":
     unittest.main()

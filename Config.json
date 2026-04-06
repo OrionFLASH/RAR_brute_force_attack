@@ -10,7 +10,7 @@
   },
   "password": {
     "min_length": 1,
-    "max_length": 8,
+    "max_length": 5,
     "charset": "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-#!~",
     "numeric_charset": "0123456789"
   },
@@ -51,7 +51,9 @@
   "parallelism": {
     "max_workers": null,
     "reserve_cpu_cores": 1,
-    "batch_size": 32
+    "batch_size": 32,
+    "use_gpu": false,
+    "use_neural_accelerator": false
   },
   "runtime": {
     "esc_key_enabled": true,
