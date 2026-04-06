@@ -41,6 +41,8 @@ def _cfg(**over) -> AppConfig:
         use_neural_accelerator=False,
         esc_key_enabled=False,
         progress_log_every_sec=5,
+        log_worker_placement_every_batch=False,
+        log_worker_placement_on_progress=False,
     )
     base.update(over)
     return AppConfig(**base)  # type: ignore[arg-type]

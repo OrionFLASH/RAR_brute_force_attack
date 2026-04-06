@@ -32,6 +32,17 @@ def main() -> None:
 
     logger, _info_p, _dbg_p = setup_logging(project_root, topic="bruteforce")
     logger.info("Запуск перебора пароля RAR; корень проекта: %s", project_root)
+    try:
+        import psutil  # noqa: F401
+
+        logger.info(
+            "Пакет psutil доступен: в логе и консоли можно выводить размещение воркеров по логическим CPU "
+            "(runtime.log_worker_placement_* в Config.json)."
+        )
+    except ImportError:
+        logger.info(
+            "Установите psutil (pip install psutil), чтобы в логе показывались номера логических CPU для каждого воркера."
+        )
 
     cfg = load_config(project_root, cfg_path)
 

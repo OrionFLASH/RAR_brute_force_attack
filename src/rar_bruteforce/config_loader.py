@@ -60,6 +60,9 @@ class AppConfig:
     use_neural_accelerator: bool
     esc_key_enabled: bool
     progress_log_every_sec: int
+    # Лог: на каких процессах/CPU отработал пакет (см. placement, нужен psutil для номера CPU)
+    log_worker_placement_every_batch: bool
+    log_worker_placement_on_progress: bool
 
 
 def _as_path(root: Path, p: str) -> Path:
@@ -181,4 +184,6 @@ def load_config(project_root: Path, config_path: Optional[Path] = None) -> AppCo
         use_neural_accelerator=bool(par.get("use_neural_accelerator", False)),
         esc_key_enabled=bool(rt.get("esc_key_enabled", True)),
         progress_log_every_sec=max(5, int(rt.get("progress_log_every_sec", 30))),
+        log_worker_placement_every_batch=bool(rt.get("log_worker_placement_every_batch", False)),
+        log_worker_placement_on_progress=bool(rt.get("log_worker_placement_on_progress", True)),
     )

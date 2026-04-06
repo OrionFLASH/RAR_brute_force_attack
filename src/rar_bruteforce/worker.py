@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import multiprocessing
+import os
+import threading
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
@@ -21,11 +24,34 @@ def pool_initializer(payload: Dict[str, Any]) -> None:
     _W = dict(payload)
 
 
-def try_password(password: str) -> Tuple[str, CheckOutcome, str]:
+def collect_execution_meta() -> Dict[str, Any]:
+    """
+    Метаданные после проверки пароля: процесс, поток, логический CPU (если доступен).
+
+    Проверка RAR идёт на CPU; GPU/NPU не задействуются — поля для единообразия в логе.
+    """
+    meta: Dict[str, Any] = {
+        "pid": os.getpid(),
+        "process_name": multiprocessing.current_process().name,
+        "thread_name": threading.current_thread().name,
+        "compute_backend": "CPU",
+        "gpu_npu_used": False,
+        "cpu_num": None,
+    }
+    try:
+        import psutil
+
+        meta["cpu_num"] = psutil.Process().cpu_num()
+    except Exception:
+        pass
+    return meta
+
+
+def try_password(password: str) -> Tuple[str, CheckOutcome, str, Dict[str, Any]]:
     """
     Проверяет один пароль.
 
-    Возвращает (пароль, результат ok|fail|error, пояснение).
+    Возвращает (пароль, результат ok|fail|error, пояснение, метаданные размещения воркера).
     """
     archive = Path(_W["archive_path"])
     mode = str(_W["checker_mode"])
@@ -37,7 +63,8 @@ def try_password(password: str) -> Tuple[str, CheckOutcome, str]:
             str(_W["unrar_command"]),
             int(_W["unrar_timeout_sec"]),
         )
-        return password, outcome, note
-    unrar_tool = str(_W.get("unrar_tool") or "") or None
-    outcome, note = check_password_rarfile(archive, password, unrar_tool)
-    return password, outcome, note
+    else:
+        unrar_tool = str(_W.get("unrar_tool") or "") or None
+        outcome, note = check_password_rarfile(archive, password, unrar_tool)
+    meta = collect_execution_meta()
+    return password, outcome, note, meta

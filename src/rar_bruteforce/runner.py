@@ -18,6 +18,7 @@ from .config_loader import AppConfig
 from .db_sqlite import AttemptRow, filter_untested_passwords, insert_attempts, utc_now_iso
 from .generators import iter_dictionary_passwords, iter_hybrid_passwords, iter_numeric_passwords
 from .logging_setup import get_logger, log_diagnostic
+from .placement import summarize_batch_worker_placement
 from .worker import pool_initializer, try_password
 
 log = get_logger("runner")
@@ -57,6 +58,11 @@ def log_parallelism_report(cfg: AppConfig, workers: int) -> None:
     log.info(
         "Нагрузка идёт на CPU: каждый воркер — отдельный процесс с вызовом UnRAR/rarfile; "
         "это типичный способ задействовать все доступные логические ядра под перебор."
+    )
+    log.info(
+        "Размещение воркеров по CPU в лог: при включённом runtime.log_worker_placement_on_progress — "
+        "каждые progress_log_every_sec сек.; при log_worker_placement_every_batch — после каждого пакета. "
+        "Номера CPU точнее с установленным пакетом psutil."
     )
     if cfg.use_gpu or cfg.use_neural_accelerator:
         log.warning(
@@ -200,8 +206,12 @@ class BruteForceRunner:
             "unrar_tool": tool,
         }
 
-    def _run_pool_batch(self, pool: Pool, passwords: list[str]) -> list[tuple[str, str, str]]:
-        """Выполняет проверку пакета паролей в пуле."""
+    def _run_pool_batch(
+        self,
+        pool: Pool,
+        passwords: list[str],
+    ) -> list[tuple[str, str, str, dict[str, Any]]]:
+        """Выполняет проверку пакета паролей в пуле; каждая строка включает метаданные воркера."""
         return list(pool.map(try_password, passwords, chunksize=1))
 
     def _handle_sigint(self, signum: int, frame: object | None) -> None:
@@ -265,6 +275,7 @@ class BruteForceRunner:
             total_checked = 0
             t0 = time.monotonic()
             last_prog = t0
+            last_batch_metas: list[dict[str, Any]] = []
 
             for phase_name, gen in phases:
                 if self.stop_event.is_set():
@@ -287,7 +298,8 @@ class BruteForceRunner:
                         raise
                     rows: list[AttemptRow] = []
                     now = utc_now_iso()
-                    for pwd, outcome, note in results:
+                    last_batch_metas = [row[3] for row in results]
+                    for pwd, outcome, note, _meta in results:
                         r = outcome if outcome in ("ok", "fail", "error") else "error"
                         rows.append(AttemptRow(archive_key, pwd, r, now))
                         # Диагностический файл: одна строка на новый код ошибки, без потока по каждой попытке
@@ -301,13 +313,17 @@ class BruteForceRunner:
                                 func_name="run",
                             )
                     insert_attempts(conn, rows)
-                    for pwd, outcome, _note in results:
+                    for pwd, outcome, _note, _meta in results:
                         if outcome == "ok":
                             log.info("Пароль найден: %s", pwd)
                             print(f"\nУСПЕХ. Пароль: {pwd}\n", flush=True)
+                            if last_batch_metas:
+                                log.info("%s", summarize_batch_worker_placement(last_batch_metas))
                             exit_code = 0
                             return exit_code
                     total_checked += len(rows)
+                    if self.cfg.log_worker_placement_every_batch and last_batch_metas:
+                        log.info("%s", summarize_batch_worker_placement(last_batch_metas))
                     now_m = time.monotonic()
                     if now_m - last_prog >= self.cfg.progress_log_every_sec:
                         last_prog = now_m
@@ -318,6 +334,8 @@ class BruteForceRunner:
                             total_checked,
                             rate,
                         )
+                        if self.cfg.log_worker_placement_on_progress and last_batch_metas:
+                            log.info("%s", summarize_batch_worker_placement(last_batch_metas))
                 if self.stop_event.is_set():
                     break
 
